@@ -227,8 +227,8 @@
                                 Grid.Column="0"
                                 Background="Transparent"
                                 ItemsSource="{Binding Categories}"
-                                SelectedItem_="{Binding SelectedCategory, Mode=TwoWay}" 
-                                SelectedItemChanged="TreeMenu_SelectedItemChanged"/>
+                                SelectedItemChanged="TreeMenu_SelectedItemChanged"
+                                SelectedItem_="{Binding SelectedCategory, Mode=TwoWay}" />
                         </Grid>
                     </Grid>
                 </Grid>
@@ -376,11 +376,11 @@
                                             HorizontalAlignment="Stretch"
                                             VerticalAlignment="Center"
                                             Background="{Binding Item.EducationType, Converter={StaticResource EducationTypeToColorConverter}}"
-                                            Command="{Binding TileClickCommand}"
+                                            Command="{Binding RelativeSource={RelativeSource AncestorType=ListView}, Path=DataContext.TileClickCommand}"
+                                            CommandParameter="{Binding Item}"
                                             Content="{multilinguality:Translate {Binding Item.EducationType, Converter={StaticResource EducationTypeToActionConverter}},
                                                                                 'Education'}"
-                                            Style="{DynamicResource PrimaryButton}"
-                                            Tag="{Binding Item}" />
+                                            Style="{DynamicResource PrimaryButton}" />
                                     </Grid>
 
                                 </DataTemplate>

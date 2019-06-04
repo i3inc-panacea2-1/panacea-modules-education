@@ -151,7 +151,7 @@ namespace Panacea.Modules.Education.Models
             get => Items.Skip((_currentPage - 1) * (int)Math.Floor(_contanerHeight / 60)).Take((int)Math.Floor(_contanerHeight / 60)).ToList();
         }
 
-        double _contanerHeight = 60;
+        double _contanerHeight = 500;
         public double ContainerHeight
         {
             get => _contanerHeight;

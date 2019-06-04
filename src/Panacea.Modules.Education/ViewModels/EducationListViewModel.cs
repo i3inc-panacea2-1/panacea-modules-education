@@ -125,6 +125,7 @@ namespace Panacea.Modules.Education.ViewModels
 
         public override async void Activate()
         {
+            if (Categories != null) return;
             try
             {
                 var response = await _http.GetObjectAsync<GetCategoriesResponse>("education/get_categories/");
