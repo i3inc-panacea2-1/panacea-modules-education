@@ -2,12 +2,15 @@
 using Panacea.Core;
 using Panacea.Modules.Education.Models;
 using Panacea.Modules.Education.Views;
+using Panacea.Multilinguality;
 using Panacea.Mvvm;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Panacea.Modules.Education.ViewModels
@@ -15,6 +18,8 @@ namespace Panacea.Modules.Education.ViewModels
     [View(typeof(EducationList))]
     class EducationListViewModel : ViewModelBase
     {
+
+
         ObservableCollection<EducationCategory> _categories;
         public ObservableCollection<EducationCategory> Categories
         {
@@ -37,6 +42,18 @@ namespace Panacea.Modules.Education.ViewModels
             }
         }
 
+        bool _busy;
+        public bool IsBusy
+        {
+            get => _busy;
+            set
+            {
+                _busy = value;
+                OnPropertyChanged();
+            }
+        }
+
+
         EducationCategory _selectedCategory;
         public EducationCategory SelectedCategory
         {
@@ -45,6 +62,7 @@ namespace Panacea.Modules.Education.ViewModels
             {
                 _selectedCategory = value;
                 OnPropertyChanged();
+                SearchTerm = "";
                 UpdateSelectedContent();
             }
         }
@@ -67,60 +85,111 @@ namespace Panacea.Modules.Education.ViewModels
             set
             {
                 _searchTerm = value;
+                UpdateSelectedContent();
                 OnPropertyChanged();
             }
         }
 
         async Task UpdateSelectedContent()
         {
-            SearchTerm = "";
 
             //DescriptionBox.Visibility = Visibility.Visible;
             try
             {
-                var cat = SelectedCategory;
-                var response =
-                    await
-                        _http.GetObjectAsync<GetCategoryResponse>($"education/get_category/{SelectedCategory.Id}/");
-                if (response.Success && SelectedCategory == cat)
+                if (IsBusy) return;
+                _cts?.Cancel();
+                var source = new CancellationTokenSource();
+                _cts = source;
+
+
+                SelectedContent = null;
+
+                if (string.IsNullOrEmpty(SearchTerm))
                 {
-                    SelectedContent = response.Result.Education.EducationCategory;
+                    IsBusy = true;
+                    var cat = SelectedCategory;
+                    var response =
+                        await
+                            _http.GetObjectAsync<GetCategoryResponse>($"education/get_category/{SelectedCategory.Id}/");
+                    if (response.Success && SelectedCategory == cat)
+                    {
+                        SelectedContent = response.Result.Education.EducationCategory;
+                    }
+                }
+                else
+                {
+                    await Task.Delay(1000);
+                    if (source.IsCancellationRequested) return;
+                    IsBusy = true;
+                    var response =
+                    await
+                       _http.GetObjectAsync<ObservableCollection<EduItem>>("education/find_items/" +
+                                                                                    WebUtility.UrlEncode(SearchTerm) + "/" +
+                                                                                    LanguageContext.Instance.Culture.Name +
+                                                                                  "/");
+                    if (source.IsCancellationRequested) return;
+                    if (response.Success)
+                    {
+                        var itemWrapers = new List<EduItemWrapper>();
+                        response.Result.ToList().ForEach(i => itemWrapers.Add(new EduItemWrapper { Item = i }));
+                        var searchCollection = new EducationCategory
+                        {
+                            Name = @"Search results for: '" + SearchTerm + @"'",
+                            Id = "search",
+                            Items = itemWrapers
+                        };
+                        SelectedContent = searchCollection;
+
+                    }
+                    else SelectedContent = new EducationCategory();
                 }
             }
             catch
             {
             }
+            finally
+            {
+                IsBusy = false;
+            }
         }
+
+        CancellationTokenSource _cts;
+
 
         public EducationListViewModel(IHttpClient http, EducationPlugin plugin)
         {
             _http = http;
-            TileClickCommand = new RelayCommand(args =>
+            RefreshCommand = new RelayCommand(args =>
             {
-                var item = args as EduItem;
+                UpdateSelectedContent();
+            });
+
+            TileClickCommand = new RelayCommand(args =>
+                {
+                    var item = args as EduItem;
                 //_websocket.PopularNotify("Education", "EducationItem", item.Id);
                 switch (item.EducationType)
-                {
-                    case "Videos":
-                        plugin.OpenVideo(item);
-                        break;
-                    case "EBooks":
-                        plugin.OpenEbook(item);
-                        break;
-                    case "Questionnaires":
-                        plugin.OpenQuestionnaire(item);
-                        break;
-                    case "Webpages":
-                        plugin.OpenWebpage(item);
-                        break;
-                    case "Games":
-                        plugin.OpenGame(item);
-                        break;
-                    case "Audio":
-                        plugin.OpenAudio(item);
-                        break;
-                }
-            });
+                    {
+                        case "Videos":
+                            plugin.OpenVideo(item);
+                            break;
+                        case "EBooks":
+                            plugin.OpenEbook(item);
+                            break;
+                        case "Questionnaires":
+                            plugin.OpenQuestionnaire(item);
+                            break;
+                        case "Webpages":
+                            plugin.OpenWebpage(item);
+                            break;
+                        case "Games":
+                            plugin.OpenGame(item);
+                            break;
+                        case "Audio":
+                            plugin.OpenAudio(item);
+                            break;
+                    }
+                });
         }
 
         public override async void Activate()
@@ -144,5 +213,7 @@ namespace Panacea.Modules.Education.ViewModels
         private readonly IHttpClient _http;
 
         public RelayCommand TileClickCommand { get; }
+
+        public RelayCommand RefreshCommand { get; }
     }
 }

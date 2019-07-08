@@ -1,4 +1,5 @@
 ﻿using Panacea.Models;
+using Panacea.Modularity.Books.Models;
 using Panacea.Multilinguality;
 using System;
 using System.Collections.Generic;
@@ -22,30 +23,6 @@ namespace Panacea.Modules.Education.Models
         [DataMember(Name = "educationCategories")]
         public List<EducationCategory> EducationCategories { get; set; }
     }
-
-    public class DataUrl
-    {
-        private string _url;
-
-        public DataUrl()
-        {
-        }
-
-        public DataUrl(string dataType, string url)
-        {
-            this.dataType = dataType;
-            this.url = url;
-        }
-
-        public string dataType { get; set; }
-
-        public string url
-        {
-            get { return _url; }
-            set { _url = value; }
-        }
-    }
-
 
 
     [DataContract]

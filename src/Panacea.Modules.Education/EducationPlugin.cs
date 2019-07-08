@@ -1,5 +1,6 @@
 ﻿using Panacea.Core;
 using Panacea.Models;
+using Panacea.Modularity.Books;
 using Panacea.Modularity.Media.Channels;
 using Panacea.Modularity.MediaPlayerContainer;
 using Panacea.Modularity.UiManager;
@@ -59,6 +60,16 @@ namespace Panacea.Modules.Education
 
         public void OpenEbook(EduItem book)
         {
+            var pl = _core.PluginLoader.GetPlugins<IBooksPlugin>().FirstOrDefault();
+            if (pl == null) return;
+            pl.OpenBook(new Modularity.Books.Models.Book()
+            {
+                DataUrl =  book.DataUrl,
+                Name = book.Name,
+                ImgThumbnail = book.ImgThumbnail,
+                Description = book.Description
+                
+            }, "Education");
             //var json = _serializer.Serialize(book);
             //_comm.RaiseEvent("books-openbook", this,
             //    new Dictionary<string, object> { { "bookJsonObj", json }, { "plugin", "Education" } });
@@ -69,7 +80,7 @@ namespace Panacea.Modules.Education
             if (video.DataUrl.Count <= 0) return;
             if (_core.TryGetMediaPlayerContainer(out IMediaPlayerContainer player))
             {
-                player.Play(new MediaRequest(new IptvMedia { URL = _core.HttpClient.RelativeToAbsoluteUri(video.DataUrl[0].url), Name = video.Name })
+                player.Play(new MediaRequest(new IptvMedia { URL = _core.HttpClient.RelativeToAbsoluteUri(video.DataUrl[0].Url), Name = video.Name })
                 {
                     AllowPip = true
                 });
@@ -82,7 +93,7 @@ namespace Panacea.Modules.Education
             if (video.DataUrl.Count <= 0) return;
             if (_core.TryGetMediaPlayerContainer(out IMediaPlayerContainer player))
             {
-                player.Play(new MediaRequest(new IptvMedia { URL = _core.HttpClient.RelativeToAbsoluteUri(video.DataUrl[0].url), Name = video.Name })
+                player.Play(new MediaRequest(new IptvMedia { URL = _core.HttpClient.RelativeToAbsoluteUri(video.DataUrl[0].Url), Name = video.Name })
                 {
                     AllowPip = false,
                     ShowVideo = false,
@@ -101,7 +112,7 @@ namespace Panacea.Modules.Education
         {
             if(_core.TryGetWebBrowser(out IWebBrowserPlugin web))
             {
-                web.OpenUnmanaged(_core.HttpClient.RelativeToAbsoluteUri(webpage.DataUrl[0].url));
+                web.OpenUnmanaged(_core.HttpClient.RelativeToAbsoluteUri(webpage.DataUrl[0].Url));
             }
         }
 
@@ -109,7 +120,7 @@ namespace Panacea.Modules.Education
         {
             if (_core.TryGetWebBrowser(out IWebBrowserPlugin web))
             {
-                web.OpenUnmanaged(_core.HttpClient.RelativeToAbsoluteUri(webpage.DataUrl[0].url));
+                web.OpenUnmanaged(_core.HttpClient.RelativeToAbsoluteUri(webpage.DataUrl[0].Url));
             }
         }
     }
